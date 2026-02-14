@@ -415,3 +415,35 @@ p {
     transform: translateY(110vh) rotate(720deg);
   }
 }
+
+/* Overlay "Chạm để nghe nhạc" - unlock audio trên mobile */
+.music-unlock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 77, 109, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+.music-unlock-overlay.music-unlock-overlay--hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.music-unlock-text {
+  font-family: "Quicksand", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1rem, 4vw, 1.35rem);
+  color: var(--primary);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}

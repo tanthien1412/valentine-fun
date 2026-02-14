@@ -220,6 +220,8 @@ function updateStars() {
     }
 }
 
+// Chưa chạm thì chưa chạy draw text; chạm rồi mới bắt đầu intro
+let introStarted = false;
 // Khi draw text xong (intro xong) thì hiện card game
 let introDone = false;
 let introScheduled = false;
@@ -388,6 +390,11 @@ function draw() {
 
     drawStars();
     updateStars();
+    // Chưa chạm thì chỉ vẽ sao, chưa chạy draw text
+    if (!introStarted) {
+        window.requestAnimationFrame(draw);
+        return;
+    }
     // Chỉ vẽ chữ trong phase intro; sau khi intro xong chỉ giữ sao làm nền
     if (!introDone) {
         drawText();
@@ -409,17 +416,51 @@ window.addEventListener("resize", function () {
 
 window.requestAnimationFrame(draw);
 
-// Nhạc nền: phát sau lần click/touch đầu (trình duyệt yêu cầu tương tác)
+// Nhạc nền: phát sau lần click/touch đầu (trình duyệt yêu cầu tương tác, đặc biệt trên mobile/iOS)
 const bgMusic = document.getElementById("bgMusic");
-function startBgMusic() {
-  if (!bgMusic || bgMusic.started) return;
-  bgMusic.started = true;
-  bgMusic.volume = 0.6;
-  bgMusic.play().catch(() => {});
-  document.removeEventListener("click", startBgMusic);
-  document.removeEventListener("touchstart", startBgMusic);
+const musicUnlockOverlay = document.getElementById("musicUnlockOverlay");
+
+function hideMusicOverlay() {
+  if (musicUnlockOverlay) musicUnlockOverlay.classList.add("music-unlock-overlay--hidden");
 }
+
+function startBgMusic(e) {
+  // Chạm lần đầu: bắt đầu draw text (intro) ngay
+  introStarted = true;
+  if (!bgMusic || bgMusic.started) return;
+  // Trên mobile cần play() gọi trực tiếp trong handler của user gesture
+  bgMusic.volume = 0.6;
+  const p = bgMusic.play();
+  if (p && typeof p.then === "function") {
+    p.then(() => {
+      bgMusic.started = true;
+      hideMusicOverlay();
+      document.removeEventListener("click", startBgMusic);
+      document.removeEventListener("touchstart", startBgMusic);
+      if (musicUnlockOverlay) {
+        musicUnlockOverlay.removeEventListener("click", startBgMusic);
+        musicUnlockOverlay.removeEventListener("touchstart", startBgMusic);
+      }
+    }).catch(() => {
+      // Giữ overlay và listener để user tap lại (vd: sau khi bật âm thanh trên máy)
+    });
+  } else {
+    bgMusic.started = true;
+    hideMusicOverlay();
+    document.removeEventListener("click", startBgMusic);
+    document.removeEventListener("touchstart", startBgMusic);
+    if (musicUnlockOverlay) {
+      musicUnlockOverlay.removeEventListener("click", startBgMusic);
+      musicUnlockOverlay.removeEventListener("touchstart", startBgMusic);
+    }
+  }
+}
+
 if (bgMusic) {
-  document.addEventListener("click", startBgMusic, { once: true });
-  document.addEventListener("touchstart", startBgMusic, { once: true });
+  document.addEventListener("click", startBgMusic);
+  document.addEventListener("touchstart", startBgMusic, { passive: true });
+  if (musicUnlockOverlay) {
+    musicUnlockOverlay.addEventListener("click", startBgMusic);
+    musicUnlockOverlay.addEventListener("touchstart", startBgMusic, { passive: true });
+  }
 }
